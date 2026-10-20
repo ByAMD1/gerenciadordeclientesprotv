@@ -169,7 +169,7 @@ export default function App() {
                 const expiringToday = clients.filter(client => {
                     if (client.status === 'pago') return false;
                     const diffDays = getDaysDifference(client.dueDate);
-                    return diffDays <= 0; // Vence hoje ou atrasado
+                    return diffDays <= 0; 
                 });
 
                 if (expiringToday.length > 0) {
@@ -186,7 +186,7 @@ export default function App() {
             }
         };
 
-        const interval = setInterval(checkDailyNotifications, 60000); // Checa a cada 1 minuto
+        const interval = setInterval(checkDailyNotifications, 60000);
         return () => clearInterval(interval);
     }, [clients, notificationTime]);
 
@@ -209,8 +209,10 @@ export default function App() {
         return { totalClients, totalRevenue, pendingAmount, paidAmount, urgentCount };
     }, [clients]);
 
+    // --- FILTRAGEM E ORDENAÇÃO AUTOMÁTICA POR DATA DE VENCIMENTO ---
     const filteredClients = useMemo(() => {
-        return clients.filter(client => {
+        // Filtra por busca e status
+        const filtered = clients.filter(client => {
             const nameMatch = client.name?.toLowerCase().includes(searchQuery.toLowerCase());
             const phoneMatch = client.phone?.includes(searchQuery);
             const serviceMatch = client.service?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -221,6 +223,9 @@ export default function App() {
             if (filterStatus === 'urgent') return client.status !== 'pago' && getDaysDifference(client.dueDate) <= 0;
             return true;
         });
+
+        // Ordena por data de vencimento (do mais antigo/vencido para o mais futuro)
+        return filtered.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
     }, [clients, searchQuery, filterStatus]);
 
     // --- Ações Locais ---
@@ -271,7 +276,6 @@ export default function App() {
             const nextDueDate = addOneMonth(client.dueDate);
             setClients(clients.map(c => c.id === client.id ? { ...c, status: 'pago', dueDate: nextDueDate } : c));
             
-            // Gravar o faturamento localmente
             const date = new Date();
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             
@@ -518,8 +522,6 @@ export default function App() {
     const renderReportsTab = () => (
         <div className="p-4 max-w-xl mx-auto space-y-4 pb-28">
             <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                
-                {/* Cabeçalho com o botão de limpar */}
                 <div className="flex justify-between items-start mb-1">
                     <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <TrendingUp className="text-[#25D366]" size={20} />
@@ -665,7 +667,7 @@ export default function App() {
                 <div className="fixed inset-0 bg-slate-900/60 z-[60] flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl p-6 max-w-sm w-full"><h3 className="font-bold mb-2">{confirmModal.title}</h3><p className="text-xs mb-6">{confirmModal.message}</p>
                         <div className="flex justify-end gap-2 text-xs">
-                            <button onClick={() => setConfirmModal(null)} className="px-4 py-2.5 rounded-xl bg-slate-100">Cancelar</button>
+                            <button onClick={() => setConfirmModal(null)} className="px-4 py-2.5 rounded-xl bg-slate-100">Cancelar colar</button>
                             <button onClick={confirmModal.onConfirm} className={`px-4 py-2.5 rounded-xl text-white ${confirmModal.isDanger ? 'bg-red-500' : 'bg-[#25D366]'}`}>{confirmModal.confirmText}</button>
                         </div>
                     </div>
